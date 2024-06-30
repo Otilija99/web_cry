@@ -3,8 +3,11 @@
 namespace App\Repositories\Currency;
 
 use App\Exceptions\HttpFailedRequestException;
+use App\Exceptions\InvalidCurrencySymbolException;
+use App\Exceptions\CurrencyNotFoundException;
 use App\Models\Currency;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use stdClass;
 
 class CoinGeckoApiCurrencyRepository implements CurrencyRepository
@@ -25,15 +28,12 @@ class CoinGeckoApiCurrencyRepository implements CurrencyRepository
     public function fetchCurrencyData(): array
     {
         try {
-            $response = $this->client->request(
-                'GET',
-                'coins/markets',
-                [
-                    'query' => [
-                        'vs_currency' => 'USD',
-                        'per_page' => '20',
-                    ]
-                ]);
+            $response = $this->client->request('GET', 'coins/markets', [
+                'query' => [
+                    'vs_currency' => 'USD',
+                    'per_page' => '20',
+                ]
+            ]);
 
             if ($response->getStatusCode() !== 200) {
                 throw new HttpFailedRequestException(
@@ -44,8 +44,8 @@ class CoinGeckoApiCurrencyRepository implements CurrencyRepository
 
             $currenciesData = $response->getBody()->getContents();
             $currencies = json_decode($currenciesData);
-            return array_map('self::deserialize', $currencies);
-        } catch (HttpFailedRequestException $e) {
+            return array_map([$this, 'deserialize'], $currencies);
+        } catch (GuzzleException $e) {
             throw new HttpFailedRequestException(
                 'HTTP request failed: ' . $e->getMessage(),
                 $e->getCode(),
@@ -57,10 +57,11 @@ class CoinGeckoApiCurrencyRepository implements CurrencyRepository
     public function searchCurrencyBySymbol(string $symbol): ?Currency
     {
         try {
-            $response = $this->client->request(
-                'GET',
-                'coins/list'
-            );
+            if (empty($symbol)) {
+                throw new InvalidCurrencySymbolException($symbol);
+            }
+
+            $response = $this->client->request('GET', 'coins/list');
 
             if ($response->getStatusCode() !== 200) {
                 throw new HttpFailedRequestException(
@@ -68,14 +69,12 @@ class CoinGeckoApiCurrencyRepository implements CurrencyRepository
                     $response->getStatusCode()
                 );
             }
+
             $currenciesData = $response->getBody()->getContents();
             $currencies = json_decode($currenciesData);
             foreach ($currencies as $currency) {
                 if ($currency->symbol === strtolower($symbol)) {
-                    $response = $this->client->request(
-                        'GET',
-                        'coins/' . $currency->id
-                    );
+                    $response = $this->client->request('GET', 'coins/' . $currency->id);
                     break;
                 }
             }
@@ -86,13 +85,14 @@ class CoinGeckoApiCurrencyRepository implements CurrencyRepository
                     $response->getStatusCode()
                 );
             }
+
             $currencyData = $response->getBody()->getContents();
             $currency = json_decode($currencyData);
             if (!isset($currency)) {
-                return null;
+                throw new CurrencyNotFoundException($symbol);
             }
             return $this->deserializeSearchResult($currency);
-        } catch (HttpFailedRequestException $e) {
+        } catch (GuzzleException $e) {
             throw new HttpFailedRequestException(
                 'HTTP request failed: ' . $e->getMessage(),
                 $e->getCode(),

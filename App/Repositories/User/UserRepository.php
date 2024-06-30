@@ -14,26 +14,22 @@ class UserRepository
         $this->database = $database;
     }
 
-
     public function add(User $user): void
     {
         $this->database->create(
-            "transaction",
+            "users",
             [
                 "username" => $user->getUsername(),
                 "password" => $user->getPassword(),
                 "balance" => $user->getBalance()
-            ],
+            ]
         );
     }
 
-    public function updateBalance(
-        User  $user,
-        float $newBalance
-    ): void
+    public function updateBalance(User $user, float $newBalance): void
     {
         $this->database->update(
-            "transaction",
+            "users",
             ["balance" => $newBalance],
             ["id" => $user->getId()]
         );
@@ -42,7 +38,7 @@ class UserRepository
 
     public function findByUsername(string $username): ?User
     {
-        $result = $this->database->findBy("transaction", "username", $username);
+        $result = $this->database->findBy("users", "username", $username);
 
         if (count($result) === 1) {
             $userdata = reset($result);
@@ -59,7 +55,7 @@ class UserRepository
     public function findById(int $id): ?User
     {
         $result = $this->database->findBy(
-            "transaction",
+            "users",
             "id",
             (string)$id
         );

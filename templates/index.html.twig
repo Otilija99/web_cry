@@ -12,13 +12,26 @@
     </thead>
     <tbody>
     {% for currency in currencies %}
-    <tr>
-        <td>{{ currency.getName() }}</td>
-        <td>{{ currency.getSymbol() }}</td>
-        <td>{{ currency.getPrice()|number_format(2, '.', ' ') }}</td>
-    </tr>
+        <tr>
+            <td>{{ currency.getName() }}</td>
+            <td>{{ currency.getSymbol() }}</td>
+            <td>{{ currency.getPrice()|number_format(2, '.', ' ') }}</td>
+        </tr>
     {% endfor %}
     </tbody>
 </table>
 
+<h2>Buy Currency</h2>
+{% include 'buy.html.twig' %}
+
+<h2>Search Currency</h2>
+<form action="/currency/search" method="POST">
+    <div>
+        <label for="symbol">Currency symbol: </label>
+        <input type="text" id="symbol" name="symbol" required>
+    </div>
+    <button type="submit">Search</button>
+</form>
+
 </body>
+</html>

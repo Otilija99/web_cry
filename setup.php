@@ -4,36 +4,58 @@ require 'vendor/autoload.php';
 
 use Medoo\Medoo;
 
-$database = new Medoo([
-    'type' => 'sqlite',
-    'database' => 'storage/database.sqlite'
-]);
+try {
+    // Ensure the storage directory exists
+    if (!file_exists('storage')) {
+        mkdir('storage', 0777, true);
+    }
 
-$database->query("CREATE TABLE IF NOT EXISTS transaction (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-username VARCHAR(32) NOT NULL,
-password VARCHAR(32) NOT NULL,
-balance FLOAT NOT NULL
-)");
+    // Initialize the database connection
+    $database = new Medoo([
+        'type' => 'sqlite',
+        'database' => 'storage/database.sqlite'
+    ]);
 
-$database->query("CREATE TABLE IF NOT EXISTS wallets (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-symbol VARCHAR(255) NOT NULL,
-amount FLOAT NOT NULL,
-average_price FLOAT NOT NULL,
-user_id INTEGER NOT NULL,
-FOREIGN KEY (user_id) REFERENCES transaction(id)
-)");
+    // Create users table
+    $database->query("
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL,
+            balance REAL NOT NULL
+        )
+    ");
 
-$database->query("CREATE TABLE IF NOT EXISTS transactions (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-user_id INTEGER NOT NULL,
-kind VARCHAR(255) NOT NULL,
-symbol VARCHAR(255) NOT NULL,
-price FLOAT NOT NULL,
-quantity FLOAT NOT NULL,
-created_at DATETIME NOT NULL,
-FOREIGN KEY (user_id) REFERENCES transaction(id)
-)");
+    // Create wallets table
+    $database->query("
+        CREATE TABLE IF NOT EXISTS wallets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            symbol TEXT NOT NULL,
+            amount REAL NOT NULL,
+            average_price REAL NOT NULL,
+            user_id INTEGER NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ");
 
-echo "Database schema initialized.\n";
+    // Create transactions table
+    $database->query("
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            kind TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            price REAL NOT NULL,
+            quantity REAL NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ");
+
+    echo "Database schema initialized.\n";
+
+} catch (PDOException $e) {
+    echo 'Database error: ' . $e->getMessage() . "\n";
+} catch (Exception $e) {
+    echo 'General error: ' . $e->getMessage() . "\n";
+}

@@ -5,4 +5,9 @@
 <p>Name: {{ currency.getName() }}</p>
 <p>Symbol: {{ currency.getSymbol() }}</p>
 <p>Price: {{ currency.getPrice()|number_format(2, '.', ' ') }}</p>
+
+<h2>Buy Currency</h2>
+{% include 'buy.html.twig' %}
+
 </body>
+</html>

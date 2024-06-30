@@ -17,7 +17,7 @@ class WalletController
     private UserRepository $userRepository;
     private WalletRepository $walletRepository;
     private Environment $twig;
-    private WalletService $walletServices;
+    private WalletService $walletService;
 
     public function __construct(Environment $twig)
     {
@@ -25,11 +25,11 @@ class WalletController
         $this->database = new SqliteService();
         $this->userRepository = new UserRepository($this->database);
         $this->walletRepository = new WalletRepository($this->database);
-        $this->walletServices = new WalletService($this->client, $this->userRepository, $this->walletRepository);
+        $this->walletService = new WalletService($this->client, $this->database, $this->userRepository);
         $this->twig = $twig;
     }
 
-    public function buy(): string // /currency/buy
+    public function buy(): string
     {
         $user = $this->userRepository->findByUsername('Customer');
         $userId = $user->getId();
@@ -45,7 +45,7 @@ class WalletController
         }
 
         try {
-            $message = $this->walletServices->buyCurrency($userId, $symbol, $quantity);
+            $message = $this->walletService->buyCurrency($userId, $symbol, $quantity);
             return $this->twig->render(
                 'success.html.twig',
                 ['message' => $message]

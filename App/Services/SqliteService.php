@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Medoo\Medoo;
 
-
 class SqliteService
 {
     private Medoo $database;
@@ -17,29 +16,18 @@ class SqliteService
         ]);
     }
 
-    public function create(string $tableName, array $values): void
+    public function create(string $table, array $data): void
     {
-        $this->database->insert($tableName, $values) === null;
+        $this->database->insert($table, $data);
     }
 
-    public function update(string $tableName, array $values, array $where): void
+    public function update(string $table, array $data, array $where): void
     {
-        $this->database->update($tableName, $values, $where);
+        $this->database->update($table, $data, $where);
     }
 
-    public function delete(string $tableName, array $where): void
+    public function findBy(string $table, string $column, $value): array
     {
-        $this->database->delete($tableName, $where);
+        return $this->database->select($table, '*', [$column => $value]);
     }
-
-    public function findByUserId(string $tableName, int $id): array
-    {
-        return $this->database->select($tableName, '*', ["user_id" => $id]) ?? [];
-    }
-
-    public function findBy(string $tableName, string $column, string $value): array
-    {
-        return $this->database->select($tableName, "*", [$column => $value]) ?? [];
-    }
-
 }

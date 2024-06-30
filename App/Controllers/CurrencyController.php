@@ -20,7 +20,7 @@ class CurrencyController
         try {
             $topCurrencies = (new CoinMarketApiCurrencyRepository())->fetchCurrencyData();
             return $this->twig->render(
-                'index.html.twig.twig',
+                'index.html.twig',
                 ['currency' => $topCurrencies]
             );
         } catch (Exception $e) {
@@ -42,5 +42,9 @@ class CurrencyController
         } catch (Exception $e) {
             return $this->twig->render('error.html.twig', ['message' => $e->getMessage()]);
         }
+    }
+    public function search()
+    {
+        // Your implementation for search
     }
 }
